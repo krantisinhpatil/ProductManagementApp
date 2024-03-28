@@ -1,0 +1,88 @@
+﻿@page "/delete/{id}"
+@using ProductManagement.Client.Model
+@using System.Text
+@using System.Text.Json
+@inject HttpClient Http
+@inject IJSRuntime JSRuntime
+@inject NavigationManager Navigation
+
+<PageTitle>Edit Product</PageTitle>
+
+<div class="d-flex justify-content-center">
+    @if (product == null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else
+    {
+            <div class="container border p-3">
+            <h2 class="text-center">Create Product</h2>
+            <hr />
+                <div class="row">
+                <div class="col-2 col-md-12 col-sm-12">
+                        <label for="Name" class="control-label pt-2" style="font-size:20px;">Name</label>
+                    </div>
+                <div class="col-10 col-md-12 col-sm-12 pb-3">
+                        <input id="Name" class="form-control" @bind="product.ProductName" disabled />
+                    </div>
+                <div class="col-2 col-md-12 col-sm-12">
+                        <label class="control-label pt-2" style="font-size:20px;">Price</label>
+                    </div>
+                <div class="col-10 col-md-12 col-sm-12 pb-3">
+                    <input id="Price" class="form-control" @bind="product.Price" disabled />
+                    </div>
+                <div class="col-2 col-md-12 col-sm-12">
+                        <label class="control-label pt-2" style="font-size:20px;">Description</label>
+                    </div>
+                <div class="col-10 col-md-12 col-sm-12 pb-3">
+                    <textarea id="Description" class="form-control" @bind="product.Description" disabled rows="5"></textarea>
+                    </div>
+                <div class="col-2 col-md-12 col-sm-12">
+                        <label for="Availability" class="control-label pt-2" style="font-size:20px;">Availability</label>
+                    </div>
+                <div class="col-10 col-md-12 col-sm-12 pb-3">
+                    <input type="checkbox" class="form-check-input" @bind="product.Availability" disabled>
+                    </div>                  
+                    <div class="col-5 offset-2">
+                        <a href="/" class="btn-primary btn form-control ">Back to List</a>
+                    </div>
+                    <div class="col-5">
+                    <input @onclick="@(() => DeleteProduct(product))" value="Delete" class="btn btn-danger form-control" />
+                    </div>
+                </div>
+                <div>
+                </div>
+            </div>       
+    }
+</div>
+
+@code {
+    [Parameter]
+    public string? Id { get; set; }
+
+    private Product? product;
+
+    protected override async Task OnInitializedAsync()
+    {
+        int productId = Convert.ToInt32(Id);
+        product = await Http.GetFromJsonAsync<Product>($"api/Product/{productId}");
+    }
+   
+
+    async Task DeleteProduct(Product? product)
+    {
+        var result = await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure? You want to delete this product?");
+        if (result)
+        {
+            var res = await Http.DeleteFromJsonAsync<bool>($"api/Product/{product.ProductId}");
+            if (res)
+            {
+                Navigation.NavigateTo("/");
+            }
+            else
+            {
+                await JSRuntime.InvokeAsync<bool>("confirm", $" Error occuring while deleting product.");
+            }
+        }
+    }
+}
