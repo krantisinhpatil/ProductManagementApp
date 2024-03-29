@@ -6,7 +6,7 @@
 @inject IJSRuntime JSRuntime
 @inject NavigationManager Navigation
 
-<PageTitle>Edit Product</PageTitle>
+<PageTitle>Delete Product</PageTitle>
 
 <div class="d-flex justify-content-center">
     @if (product == null)
@@ -16,38 +16,45 @@
     else
     {
             <div class="container border p-3">
-            <h2 class="text-center">Create Product</h2>
+            <h2 class="text-center">Delete Product</h2>
             <hr />
                 <div class="row">
-                <div class="col-2 col-md-12 col-sm-12">
+                <div class="col-12 col-lg-2 col-xl-2">
                         <label for="Name" class="control-label pt-2" style="font-size:20px;">Name</label>
                     </div>
-                <div class="col-10 col-md-12 col-sm-12 pb-3">
+                <div class="col-12 col-lg-10 col-xl-10 pb-3">
                         <input id="Name" class="form-control" @bind="product.ProductName" disabled />
                     </div>
-                <div class="col-2 col-md-12 col-sm-12">
+                <div class="col-12 col-lg-2 col-xl-2">
                         <label class="control-label pt-2" style="font-size:20px;">Price</label>
                     </div>
-                <div class="col-10 col-md-12 col-sm-12 pb-3">
+                <div class="col-12 col-lg-10 col-xl-10 pb-3">
                     <input id="Price" class="form-control" @bind="product.Price" disabled />
                     </div>
-                <div class="col-2 col-md-12 col-sm-12">
+                <div class="col-12 col-lg-2 col-xl-2">
                         <label class="control-label pt-2" style="font-size:20px;">Description</label>
                     </div>
-                <div class="col-10 col-md-12 col-sm-12 pb-3">
+                <div class="col-12 col-lg-10 col-xl-10 pb-3">
                     <textarea id="Description" class="form-control" @bind="product.Description" disabled rows="5"></textarea>
                     </div>
-                <div class="col-2 col-md-12 col-sm-12">
-                        <label for="Availability" class="control-label pt-2" style="font-size:20px;">Availability</label>
+                <div class="col-12 col-lg-2 col-xl-2">
+                        <label for="Availability" class="control-label" style="font-size:20px;">Availability</label>
                     </div>
-                <div class="col-10 col-md-12 col-sm-12 pb-3">
-                    <input type="checkbox" class="form-check-input" @bind="product.Availability" disabled>
+                <div class="col-12 col-lg-10 col-xl-10 pb-3">
+                    @if (product.Availability)
+                    {
+                        <span class="badge text-white text-bg-success">InStock</span>
+                    }
+                    else
+                    {
+                        <span class="badge text-white text-bg-danger">OutOfStock</span>
+                    }
                     </div>                  
                     <div class="col-5 offset-2">
                         <a href="/" class="btn-primary btn form-control ">Back to List</a>
                     </div>
                     <div class="col-5">
-                    <input @onclick="@(() => DeleteProduct(product))" value="Delete" class="btn btn-danger form-control" />
+                    <input @onclick="@(() => DeleteProduct())" value="Delete" class="btn btn-danger form-control" />
                     </div>
                 </div>
                 <div>
@@ -67,21 +74,23 @@
         int productId = Convert.ToInt32(Id);
         product = await Http.GetFromJsonAsync<Product>($"api/Product/{productId}");
     }
-   
 
-    async Task DeleteProduct(Product? product)
+    public async Task DeleteProduct()
     {
-        var result = await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure? You want to delete this product?");
-        if (result)
+       var response= await JSRuntime.InvokeAsync<bool>("showDeleteConfirmation");
+
+
+        if (response)
         {
             var res = await Http.DeleteFromJsonAsync<bool>($"api/Product/{product.ProductId}");
             if (res)
             {
+                await JSRuntime.InvokeAsync<bool>("SuccessAlert", "Product Deleted Successfully");
                 Navigation.NavigateTo("/");
             }
             else
             {
-                await JSRuntime.InvokeAsync<bool>("confirm", $" Error occuring while deleting product.");
+                await JSRuntime.InvokeAsync<bool>("Swal.fire", "Error", "An error occurred while deleting the product.", "error");
             }
         }
     }

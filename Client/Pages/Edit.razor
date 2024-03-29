@@ -19,7 +19,6 @@
     {
         <EditForm Model="product" OnValidSubmit="UpdateProduct">
             <DataAnnotationsValidator />
-            @* <ValidationSummary /> *@
             <br />
             <div class="container border p-3">
                 <h2 class="text-center">Edit Product</h2>
@@ -65,7 +64,7 @@
 
                     
                         <div class="col-5  offset-2">
-                            <a href="/" class="btn-primary btn form-control ">Back</a>
+                            <a href="/" class="btn-primary btn form-control ">Back To List</a>
                         </div>
                         <div class="col-5">
                             <input type="submit" value="Update" class="btn btn-success form-control" />
@@ -95,19 +94,17 @@
     {
         var editContext = new EditContext(product);
         var isValid = editContext.Validate();
-
-
         if (product != null && isValid)
         {
-
-            bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to update this product?");
-            if (confirmed)
+            var res= await JSRuntime.InvokeAsync<bool>("showEditConfirmation");
+            if (res)
             {
                 var json = JsonSerializer.Serialize(product);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
                 var response = await Http.PutAsync("api/Product", content);
                 if (response.IsSuccessStatusCode)
                 {
+                    await JSRuntime.InvokeAsync<bool>("SuccessAlert", "Product Updated Successfully");
                     Navigation.NavigateTo("/");
                 }
                 else
@@ -115,8 +112,10 @@
                     Console.WriteLine($"Failed to create product. Status code: {response.StatusCode}");
 
                 }
+            }else if (!res)
+            {
+                Navigation.NavigateTo("/");
             }
-
 
         }
         else
